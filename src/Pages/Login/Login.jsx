@@ -24,11 +24,19 @@ import {
 } from "@chakra-ui/react";
 
 const Login = (props) => {
-  const [loading, setLoading] = useState(false);
   const [btn, setbtn] = useState();
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [pass, setpass] = useState(false);
   const [show, setShow] = useState(false);
+ 
+ 
+  const [mobile, setMobile] = useState("");
+  
+  const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  
+  const [loading, setLoading] = useState(false);
+
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { setisAuth, setAuthData } = useContext(AuthContext);
   const [incorrect, setinCorrect] = useState(false);
@@ -54,53 +62,83 @@ const Login = (props) => {
     setbtn(buton);
   };
 
-  const getData = async () => {
-    try {
-      setLoading(true);
-      setinCorrect(false);
-      if (loginData.email !== "" && loginData.password !== "") {
-        const res = await fetch(
-          "https://harlequin-fawn-tutu.cyclic.app/user/login",
-          {
-            method: "POST",
-            body: JSON.stringify(loginData),
-            headers: {
-              "Content-type": "application/json"
-            }
-          }
-        );
-        let data = await res.json();
-        if (res) {
-          const credential = await fetch(
-            "https://harlequin-fawn-tutu.cyclic.app/user"
-          );
-          let cred = await credential.json();
-          localStorage.setItem("token", data.token);
-          res1 = cred.filter((el) => el.email === loginData.email);
-          setisAuth(true);
-          setAuthData(res1);
-          if (loginData.email.includes(process.env.admin)) {
-            setLoading(false);
-            setinCorrect(false);
-            onClose();
-            navigate("/productlist");
-          } else {
-            setLoading(false);
-            setinCorrect(false);
-            onClose();
-          }
-        } else {
-          setLoading(false);
-          setinCorrect(true);
-        }
-      }
-    } catch (error) {
-      setLoading(false);
-      setinCorrect(true);
-      console.log("An error occurred. Please try again later.");
-    }
-  };
+  // const getData = async () => {
 
+  //   setLoading(true);
+  //   setError("");
+  //   setSuccessMsg("");
+
+  //   try {
+  //     const response = await fetch("https://pcb.nexttech.fun/api/user_login", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json"
+  //       },
+  //       body: JSON.stringify({ mobile })
+  //     });
+
+  //     const data = await response.json();
+
+  //     if (data.res === "success") {
+  //       setisAuth(true);
+  //       setAuthData(data.data); 
+  //       localStorage.setItem("otp", data.data.otp); 
+  //       setSuccessMsg("Login successful. OTP sent to your mobile.");
+  //       setTimeout(() => {
+  //         onClose();
+  //       }, 2000);
+  //     } else {
+  //       setError(data.msg || "Login failed");
+  //     }
+  //   } catch (err) {
+  //     setError("An error occurred. Please try again.");
+  //   }
+
+  //   setLoading(false);
+  // };
+  const getData = async () => {
+    setLoading(true);
+    setError("");
+    setSuccessMsg("");
+  
+    try {
+      const response = await fetch("https://pcb.nexttech.fun/api/user_login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ mobile })
+      });
+  
+      const data = await response.json();
+  
+      if (data.res === "success") {
+        setisAuth(true);
+        setAuthData(data.data); 
+        localStorage.setItem("otp", data.data.otp); 
+        setSuccessMsg("Login successful. OTP sent to your mobile.");
+  
+        await fetch("http://localhost:5000/users", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(data.data)
+        });
+  
+        setTimeout(() => {
+          onClose();
+        }, 2000);
+      } else {
+        setError(data.msg || "Login failed");
+      }
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+    }
+  
+    setLoading(false);
+  };
+  
   const handleClick = () => {
     loginData.password = "";
     setpass(false);

@@ -110,44 +110,41 @@ const Signup = () => {
     }
   };
 
-  const getData = (body) => {
+  const getData = async () => {
     setLoading(true);
 
-    fetch(`https://harlequin-fawn-tutu.cyclic.app/user`)
-      .then((res) => res.json())
-      .then((res) => {
-        res.map((el) => {
-          if (el.email === body.email) {
-            flag = true;
-            setExist(true);
-            return el;
-          }
-          setLoading(false);
-        });
-      })
-      .then(() => {
-        if (flag === false) {
-          fetch(`https://harlequin-fawn-tutu.cyclic.app/user/register`, {
-            method: "POST",
-            body: JSON.stringify(body),
-            headers: {
-              "Content-Type": "application/json"
-            }
-          })
-            .then((res) => res.json())
-            .then((res) => {
-              setAuth(true);
-              setLoading(false);
-              setExist(false);
-            })
-            .catch((err) => setAuth(false))
-            .finally(() => setLoading(false))
-            .finally(() => setExist(false))
-            .finally(() => onClose());
-        } else {
-          setLoading(false);
-        }
+    const payload = {
+      name: `${userData.first_name} ${userData.last_name}`,
+      mobile: userData.ph_no
+    };
+
+    try {
+      const res = await fetch("https://pcb.nexttech.fun/api/user_signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
       });
+
+      const result = await res.json();
+
+      if (result.res === "success") {
+        setAuth(true);
+        setExist(false);
+        console.log("User registered:", result.data);
+        // No OTP handling
+      } else {
+        setAuth(false);
+        setExist(true);
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      setAuth(false);
+    } finally {
+      setLoading(false);
+      onClose();
+    }
   };
 
   const handleRegister = () => {
