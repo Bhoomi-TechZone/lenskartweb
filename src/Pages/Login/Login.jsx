@@ -61,42 +61,7 @@ const Login = (props) => {
     );
     setbtn(buton);
   };
-
-  // const getData = async () => {
-
-  //   setLoading(true);
-  //   setError("");
-  //   setSuccessMsg("");
-
-  //   try {
-  //     const response = await fetch("https://pcb.nexttech.fun/api/user_login", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json"
-  //       },
-  //       body: JSON.stringify({ mobile })
-  //     });
-
-  //     const data = await response.json();
-
-  //     if (data.res === "success") {
-  //       setisAuth(true);
-  //       setAuthData(data.data); 
-  //       localStorage.setItem("otp", data.data.otp); 
-  //       setSuccessMsg("Login successful. OTP sent to your mobile.");
-  //       setTimeout(() => {
-  //         onClose();
-  //       }, 2000);
-  //     } else {
-  //       setError(data.msg || "Login failed");
-  //     }
-  //   } catch (err) {
-  //     setError("An error occurred. Please try again.");
-  //   }
-
-  //   setLoading(false);
-  // };
-  const getData = async () => {
+    const getData = async () => {
     setLoading(true);
     setError("");
     setSuccessMsg("");
