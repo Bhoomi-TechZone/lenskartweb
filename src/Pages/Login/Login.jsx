@@ -2,6 +2,7 @@ import React, { useContext, useState } from "react";
 import { AuthContext } from "../../ContextApi/AuthContext";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
+import swal from "sweetalert";
 import {
   Checkbox,
   useDisclosure,
@@ -31,7 +32,7 @@ const Login = (props) => {
  
  
   const [mobile, setMobile] = useState("");
-  
+  const [userData, setUserData] = useState({ email: '', password: '' });
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   
@@ -61,49 +62,58 @@ const Login = (props) => {
     );
     setbtn(buton);
   };
-    const getData = async () => {
-    setLoading(true);
-    setError("");
-    setSuccessMsg("");
   
-    try {
-      const response = await fetch("https://pcb.nexttech.fun/api/user_login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ mobile })
-      });
-  
-      const data = await response.json();
-  
-      if (data.res === "success") {
-        setisAuth(true);
-        setAuthData(data.data); 
-        localStorage.setItem("otp", data.data.otp); 
-        setSuccessMsg("Login successful. OTP sent to your mobile.");
-  
-        await fetch("http://localhost:5000/users", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(data.data)
-        });
-  
-        setTimeout(() => {
-          onClose();
-        }, 2000);
-      } else {
-        setError(data.msg || "Login failed");
-      }
-    } catch (err) {
-      setError("An error occurred. Please try again.");
-    }
-  
-    setLoading(false);
+
+const getData = async () => {
+  setLoading(true);
+  setError("");
+  setSuccessMsg("");
+
+  const payload = {
+    email: userData.email,
+    password: userData.password
   };
-  
+
+  try {
+    const response = await fetch("https://lens.princy.shop/api/usersignin", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+    console.log("Login response:", result);
+
+    if (result.status === true) {
+     
+      const { fname, lname, email, number, id } = result.data;
+
+      localStorage.setItem("user", JSON.stringify({ id, fname, lname, email, number }));
+
+      
+      swal("Success!", result.message || "Login successful!", "success");
+
+      
+      setSuccessMsg("Login successful!");
+      setTimeout(() => {
+        onClose();
+      }, 2000);
+    } else {
+     
+      swal("Error!", result.message || "Invalid credentials", "error");
+      setError(result.message || "Login failed.");
+    }
+  } catch (error) {
+    console.error("Login error:", error);
+    swal("Error!", "Something went wrong. Please try again.", "error");
+    setError("Something went wrong. Please try again.");
+  }
+
+  setLoading(false);
+};
+
   const handleClick = () => {
     loginData.password = "";
     setpass(false);

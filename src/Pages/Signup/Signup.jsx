@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
+import swal from "sweetalert";
+
 import {
   Center,
   Heading,
@@ -110,42 +112,101 @@ const Signup = () => {
     }
   };
 
-  const getData = async () => {
-    setLoading(true);
+  // const getData = async () => {
+  //   setLoading(true);
 
-    const payload = {
-      name: `${userData.first_name} ${userData.last_name}`,
-      mobile: userData.ph_no
-    };
+  //   const payload = {
+  //    fname: userData.first_name,
+  //   lname: userData.last_name,
+  //   number: userData.ph_no,
+  //   email: userData.email,
+  //   password: userData.password,
+  //   password_confirmation: userData.password
+      
+  //   };
 
-    try {
-      const res = await fetch("https://pcb.nexttech.fun/api/user_signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload)
-      });
+  //   try {
+  //     const res = await fetch(" https://lens.princy.shop/api/usersignup", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json"
+  //       },
+  //       body: JSON.stringify(payload)
+  //     });
 
-      const result = await res.json();
+  //     const result = await res.json();
 
-      if (result.res === "success") {
-        setAuth(true);
-        setExist(false);
-        console.log("User registered:", result.data);
-        // No OTP handling
-      } else {
-        setAuth(false);
-        setExist(true);
-      }
-    } catch (error) {
-      console.error("Signup error:", error);
-      setAuth(false);
-    } finally {
-      setLoading(false);
-      onClose();
-    }
+  //     if (result.res === "success") {
+  //       setAuth(true);
+  //       setExist(false);
+  //       console.log("User registered:", result.data);
+  //       // No OTP handling
+  //     } else {
+  //       setAuth(false);
+  //       setExist(true);
+  //     }
+  //   } catch (error) {
+  //     console.error("Signup error:", error);
+  //     setAuth(false);
+  //   } finally {
+  //     setLoading(false);
+  //     onClose();
+  //   }
+  // };
+
+  
+const getData = async () => {
+  setLoading(true);
+
+  const payload = {
+    fname: userData.first_name,
+    lname: userData.last_name,
+    number: userData.ph_no,
+    email: userData.email,
+    password: userData.password,
+    password_confirmation: userData.password
   };
+
+  try {
+    const res = await fetch("https://lens.princy.shop/api/usersignup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await res.json();
+
+    if (result.res === "success") {
+      setAuth(true);
+      setExist(false);
+      console.log("User registered:", result.data);
+      localStorage.setItem("user", JSON.stringify({
+        fname: result.data.fname,
+        lname: result.data.lname,
+        number: result.data.number,
+        email: result.data.email,
+        token: result.data.token 
+      }));
+      swal("Success!", "User registered successfully!", "success");
+    } else {
+      setAuth(false);
+      setExist(true);
+
+     
+      swal("Error!", result.message || "User already exists or something went wrong.", "error");
+    }
+  } catch (error) {
+    console.error("Signup error:", error);
+    setAuth(false);
+
+    swal("Error", "Something went wrong. Please try again.", "error");
+  } finally {
+    setLoading(false);
+    onClose();
+  }
+};
 
   const handleRegister = () => {
     getData(userData);
