@@ -1,3 +1,4 @@
+
 import React, { useContext, useState } from "react";
 import { AuthContext } from "../../ContextApi/AuthContext";
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
@@ -21,280 +22,225 @@ import {
   Flex,
   Center,
   InputGroup,
-  InputRightElement
+  InputRightElement,
 } from "@chakra-ui/react";
 
-const Login = (props) => {
-  const [btn, setbtn] = useState();
+const Login = () => {
   const [loginData, setLoginData] = useState({ email: "", password: "" });
-  const [pass, setpass] = useState(false);
-  const [show, setShow] = useState(false);
- 
- 
-  const [mobile, setMobile] = useState("");
-  const [userData, setUserData] = useState({ email: '', password: '' });
+  const [passPhase, setPassPhase] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-  
   const [loading, setLoading] = useState(false);
+  const [incorrect, setIncorrect] = useState(false);
+  const [validationMsg, setValidationMsg] = useState(null);
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const { setisAuth, setAuthData } = useContext(AuthContext);
-  const [incorrect, setinCorrect] = useState(false);
   const navigate = useNavigate();
-  let res1 = [];
 
-  const handlechange = (e) => {
-    setinCorrect(false);
+  const handleChange = (e) => {
+    setIncorrect(false);
+    setError("");
+    setSuccessMsg("");
     const { name, value } = e.target;
-    setLoginData({ ...loginData, [name]: value });
+    setLoginData((prev) => ({ ...prev, [name]: value }));
 
-    const buton = (
-      <Box
-        fontSize={"14px"}
-        mt="5px"
-        color={"#ff1f1f"}
-        fontWeight="500"
-        letterSpacing={"-0.4px"}
-      >
-        Please enter a valid Email or Mobile Number.
-      </Box>
-    );
-    setbtn(buton);
-  };
-  
-
-const getData = async () => {
-  setLoading(true);
-  setError("");
-  setSuccessMsg("");
-
-  const payload = {
-    email: userData.email,
-    password: userData.password
-  };
-
-  try {
-    const response = await fetch("https://lens.princy.shop/api/usersignin", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
-
-    const result = await response.json();
-    console.log("Login response:", result);
-
-    if (result.status === true) {
-     
-      const { fname, lname, email, number, id } = result.data;
-
-      localStorage.setItem("user", JSON.stringify({ id, fname, lname, email, number }));
-
-      
-      swal("Success!", result.message || "Login successful!", "success");
-
-      
-      setSuccessMsg("Login successful!");
-      setTimeout(() => {
-        onClose();
-      }, 2000);
+    if (name === "email" && (!value.includes("@") || !value.includes(".com"))) {
+      setValidationMsg(
+        <Box fontSize="14px" mt="5px" color="#ff1f1f" fontWeight="500">
+          Please enter a valid Email.
+        </Box>
+      );
     } else {
-     
-      swal("Error!", result.message || "Invalid credentials", "error");
-      setError(result.message || "Login failed.");
+      setValidationMsg(null);
     }
-  } catch (error) {
-    console.error("Login error:", error);
-    swal("Error!", "Something went wrong. Please try again.", "error");
-    setError("Something went wrong. Please try again.");
-  }
-
-  setLoading(false);
-};
-
-  const handleClick = () => {
-    loginData.password = "";
-    setpass(false);
   };
 
-  const handlesign = () => {
-    setpass(true);
-    if (loginData.password.length > 6) {
-      getData(loginData);
+  const getData = async () => {
+    setLoading(true);
+
+    try {
+      const response = await fetch("https://lens.princy.shop/api/usersignin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(loginData),
+      });
+
+      const result = await response.json();
+
+      if (result.status === true && result.data) {
+        const { fname, lname, email, number, id } = result.data;
+        const userDataToStore = { id, fname, lname, email, number };
+        localStorage.setItem("user", JSON.stringify(userDataToStore));
+
+        swal("Success!", result.message || "Login successful!", "success");
+        setSuccessMsg("Login successful!");
+        setisAuth(true);
+        setAuthData(userDataToStore);
+        onClose();
+        setTimeout(() => {
+          onClose();
+          // navigate("/");
+        }, 2000);
+      } else {
+        setIncorrect(true);
+        swal("Error!", result.message || "Invalid credentials", "error");
+        setError(result.message || "Login failed.");
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      swal("Error!", "Something went wrong. Please try again.", "error");
+      setError("Something went wrong. Please try again.");
     }
+
+    setLoading(false);
+  };
+
+  const handleEmailSubmit = () => {
+    if (loginData.email.includes("@") && loginData.email.includes(".com")) {
+      setPassPhase(true);
+    } else {
+      setValidationMsg(
+        <Box fontSize="14px" mt="5px" color="#ff1f1f" fontWeight="500">
+          Please enter a valid Email.
+        </Box>
+      );
+    }
+  };
+
+  const handlePasswordSubmit = () => {
+    if (loginData.password.length >= 6) {
+      getData();
+    } else {
+      setValidationMsg(
+        <Box fontSize="14px" mt="5px" color="#ff1f1f" fontWeight="500">
+          Password must be at least 6 characters.
+        </Box>
+      );
+    }
+  };
+
+  const resetLogin = () => {
+    setPassPhase(false);
+    setLoginData({ ...loginData, password: "" });
   };
 
   return (
     <div>
-      <Center onClick={onOpen} fontWeight={"400"} fontSize="15px" w="80px">
+      <Center onClick={onOpen} fontWeight="400" fontSize="15px" w="80px">
         Sign In
       </Center>
 
-      <Modal
-        isOpen={isOpen}
-        onClose={onClose}
-        isCentered
-        size={{ xl: "md", lg: "md", md: "md", sm: "md", base: "sm" }}
-      >
+      <Modal isOpen={isOpen} onClose={onClose} isCentered size="md">
         <ModalOverlay />
         <ModalContent rounded="3xl">
-          <ModalCloseButton
-            borderRadius={"50%"}
-            bg="white"
-            m={"10px 10px 0px 0px"}
-          />
+          <ModalCloseButton borderRadius="50%" bg="white" m="10px" />
 
-          <ModalBody p={"0px 0px "} borderRadius={"15px 15px 15px 15px "}>
+          <ModalBody p="0">
             <Image
               src="https://static1.lenskart.com/media/desktop/img/DesignStudioIcons/DesktopLoginImage.svg"
-              alt="pic"
-              borderRadius={"10px 10px 0px 0px "}
+              alt="Login"
+              borderRadius="10px 10px 0 0"
             />
-            <Box m={"34px 45px 50px 45px"}>
-              <Heading
-                fontFamily={" Times, serif"}
-                fontWeight="100"
-                fontSize={"28px"}
-                mb="24px"
-                color={"#333368"}
-              >
+
+            <Box m="34px 45px 50px 45px">
+              <Heading fontFamily="Times, serif" fontWeight="100" fontSize="28px" mb="24px" color="#333368">
                 Sign In
               </Heading>
 
-              {pass === false ? (
-                <Input
-                  name="email"
-                  placeholder="Email"
-                  h={"50px"}
-                  fontSize="16px"
-                  focusBorderColor="rgb(206, 206, 223)"
-                  borderColor={"rgb(206, 206, 223)"}
-                  onChange={handlechange}
-                  rounded="2xl"
-                />
+              {!passPhase ? (
+                <>
+                  <Input
+                    name="email"
+                    placeholder="Email"
+                    h="50px"
+                    fontSize="16px"
+                    onChange={handleChange}
+                    rounded="2xl"
+                  />
+                  {validationMsg}
+                  <Button
+                    mt="4"
+                    onClick={handleEmailSubmit}
+                    bgColor="#11daac"
+                    width="100%"
+                    borderRadius="35px"
+                    h="50px"
+                    fontSize="18px"
+                  >
+                    Continue
+                  </Button>
+                </>
               ) : (
-                <Box>
-                  <Box fontSize={"17px"} color="#66668e">
+                <>
+                  <Box fontSize="17px" color="#66668e">
                     Enter password for
                   </Box>
-
-                  <Flex
-                    justifyContent={"space-between"}
-                    fontFamily={" sans-serif"}
-                    mb="22px"
-                    color={"#000042"}
-                  >
+                  <Flex justifyContent="space-between" mb="22px" color="#000042">
                     <Box fontSize="18px">{loginData.email}</Box>
-                    <Box
-                      fontSize={"14px"}
-                      textDecoration="underline"
-                      onClick={handleClick}
-                      cursor="pointer"
-                    >
+                    <Box fontSize="14px" textDecoration="underline" onClick={resetLogin} cursor="pointer">
                       Edit
                     </Box>
                   </Flex>
-
                   <InputGroup>
                     <Input
-                      type={show ? "text" : "password"}
+                      type={showPassword ? "text" : "password"}
                       name="password"
                       placeholder="Enter password"
-                      h={"50px"}
+                      h="50px"
                       fontSize="16px"
-                      focusBorderColor="rgb(206, 206, 223)"
-                      borderColor={"rgb(206, 206, 223)"}
-                      onChange={handlechange}
+                      onChange={handleChange}
                       rounded="2xl"
                     />
-
-                    <InputRightElement width="6.5rem" size="lg">
-                      <Button
-                        size="md"
-                        borderRadius="3xl"
-                        mt="10%"
-                        onClick={() => setShow(!show)}
-                        bg="white"
-                      >
-                        {show ? <ViewOffIcon /> : <ViewIcon />}
+                    <InputRightElement width="6.5rem">
+                      <Button size="md" borderRadius="3xl" onClick={() => setShowPassword(!showPassword)} bg="white">
+                        {showPassword ? <ViewOffIcon /> : <ViewIcon />}
                       </Button>
                     </InputRightElement>
                   </InputGroup>
 
-                  {incorrect === true ? (
-                    <Box
-                      fontSize={"14px"}
-                      m="3px 0px 3px 0px"
-                      color={"#ff1f1f"}
-                      fontWeight="500"
-                      ml="2"
-                      letterSpacing={"-0.4px"}
-                    >
+                  {incorrect && (
+                    <Box fontSize="14px" color="#ff1f1f" fontWeight="500" ml="2" mt="2">
                       Wrong email or password
                     </Box>
-                  ) : (
-                    ""
                   )}
-                </Box>
+
+                  {validationMsg}
+
+                  <Button
+                    mt="4"
+                    isLoading={loading}
+                    onClick={handlePasswordSubmit}
+                    bgColor="#11daac"
+                    width="100%"
+                    borderRadius="35px"
+                    h="50px"
+                    fontSize="18px"
+                  >
+                    Sign In
+                  </Button>
+                </>
               )}
-              <Box
-                textDecoration={"underline"}
-                m="15px 0px 0px 0px"
-                color="#000042"
-                fontSize="15px"
-              >
+
+              <Box textDecoration="underline" mt="15px" color="#000042" fontSize="15px">
                 Forget Password
               </Box>
-              {loginData.email.includes("@") && loginData.email.includes(".com")
-                ? ""
-                : btn}
 
-              <HStack fontSize="16px">
-                <Checkbox mb={"20px"} mt="20px" size="sm">
-                  Get Update on whatsapp
-                </Checkbox>
+              <HStack mt="20px">
+                <Checkbox size="sm">Get Updates on WhatsApp</Checkbox>
                 <Image
                   src="https://static.lenskart.com/media/desktop/img/25-July-19/whatsapp.png"
-                  w={"22px"}
+                  w="22px"
                   h="22px"
                 />
               </HStack>
-              {loginData.email.includes("@") &&
-              loginData.email.includes(".com") ? (
-                <Button
-                  isLoading={loading}
-                  onClick={handlesign}
-                  bgColor={"#11daac"}
-                  width="100%"
-                  borderRadius={"35px/35px"}
-                  h="50px"
-                  fontSize="18px"
-                  _hover={{ backgroundColor: "#11daac" }}
-                >
-                  Sign In
-                </Button>
-              ) : (
-                <Button
-                  bgColor={"#cccccc"}
-                  width="100%"
-                  borderRadius={"35px/35px"}
-                  fontSize="18px"
-                  h="50px"
-                  _hover={{ backgroundColor: "#cccccc" }}
-                >
-                  Sign In
-                </Button>
-              )}
 
-              <HStack spacing={"0px"} mt="19px" gap="2">
-                <Box fontSize={"14px"}> New member?</Box>
-                <Link
-                  fontSize={"15px"}
-                  fontWeight="500"
-                  textDecoration={"underline"}
-                >
+              <HStack spacing="0px" mt="19px" gap="2">
+                <Box fontSize="14px">New member?</Box>
+                <Link fontSize="15px" fontWeight="500" textDecoration="underline">
                   Create an Account
                 </Link>
               </HStack>
@@ -307,3 +253,4 @@ const getData = async () => {
 };
 
 export default Login;
+
